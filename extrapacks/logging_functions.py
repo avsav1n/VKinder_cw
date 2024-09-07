@@ -2,7 +2,6 @@
 Модуль инициализации логгирования.
 
 '''
-
 import functools
 import logging
 import os
@@ -27,7 +26,7 @@ def logging_decorator(old_func):
     @functools.wraps(old_func)
     def new_func(*args, **kwargs):
         logging_params = {'old_func': old_func.__name__,
-                        'args': args[1:], 
+                        'args': args, 
                         'kwargs': kwargs,
                         'spaces': ' ' * 25}
         logging.info('Запущена функция %(old_func)s\n%(spaces)sАргументы: %(args)s, %(kwargs)s',

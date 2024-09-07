@@ -1,3 +1,5 @@
 .venv
 __pycache__
 progress.log
+.pytest_cache
+.vscode

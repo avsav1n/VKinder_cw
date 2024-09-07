@@ -24,6 +24,8 @@ class Database:
        Для работы с базой данных в файл config.py необходимо ввести параметры подключения.
     
     '''
+    session = DatabaseConfig.Session()
+
     @logging_decorator
     @staticmethod
     def get_gender(name: str) -> int:
@@ -31,9 +33,10 @@ class Database:
         
         '''
         name = name.capitalize().replace('ё', 'е')
-        result = session.query(Genders.sex).\
+        result = Database.session.query(Genders.sex).\
             filter(Genders.name == name).scalar()
         return result
+
 
     @logging_decorator
     @staticmethod
@@ -44,8 +47,9 @@ class Database:
            после перезапуска программы.
         
         '''
-        result = {id.id_user: {} for id in session.query(Users.id_user).all()}
+        result = {id.id_user: {} for id in Database.session.query(Users.id_user).all()}
         return result
+
 
     @logging_decorator
     @staticmethod
@@ -53,7 +57,7 @@ class Database:
         '''Функция выборки всей информации о пользователе из таблицы "users".
         
         '''
-        result = session.query(Users).\
+        result = Database.session.query(Users).\
             filter(Users.id_user == user_id).scalar()
         return {column: getattr(result, column) for column in result.__table__.c.keys()}
 
@@ -64,8 +68,9 @@ class Database:
         
         '''
         model = Users(**user_info)
-        session.add(model)
-        session.commit()
+        Database.session.add(model)
+        Database.session.commit()
+
 
     @logging_decorator
     @staticmethod
@@ -75,8 +80,9 @@ class Database:
         
         '''
         model = UsersPartners(id_user=user_id, id_partner=partner_id, ignore=ignore)
-        session.add(model)
-        session.commit()
+        Database.session.add(model)
+        Database.session.commit()
+
 
     @logging_decorator
     @staticmethod
@@ -94,14 +100,15 @@ class Database:
 
         partner_info ={
             'id_partner': partner_id,
-            'link': f'https://vk.com/id{partner_info['id']}',
+            'link': f'https://vk.com/id{partner_id}',
             'first_name': partner_info['first_name'],
             'last_name': partner_info['last_name']
         }
         model = Partners(**partner_info)
         model.users_partners = [UsersPartners(id_user=user_id, ignore=ignore)]
-        session.add(model)
-        session.commit()
+        Database.session.add(model)
+        Database.session.commit()
+
 
     @logging_decorator
     @staticmethod
@@ -109,10 +116,11 @@ class Database:
         '''Функция проверки наличия флага ignore в таблице "users_partners".
         
         '''
-        result = session.query(UsersPartners.ignore).\
+        result = Database.session.query(UsersPartners.ignore).\
             filter(UsersPartners.id_user == user_id, 
                    UsersPartners.id_partner == partner_id).scalar()
         return bool(result)
+
 
     @logging_decorator
     @staticmethod
@@ -120,9 +128,10 @@ class Database:
         '''Функция проверки наличия записи о партнере в таблице "partners".
         
         '''
-        result = session.query(Partners.id_partner).\
+        result = Database.session.query(Partners.id_partner).\
             filter(Partners.id_partner == partner_id).scalar()
         return bool(result)
+
 
     @logging_decorator
     @staticmethod
@@ -130,10 +139,11 @@ class Database:
         '''Функция проверки наличия записи о пользователе и партнере в таблице "users_partners".
         
         '''
-        result = session.query(UsersPartners.id_user).\
+        result = Database.session.query(UsersPartners.id_user).\
             filter(UsersPartners.id_user == user_id,
                    UsersPartners.id_partner == partner_id).scalar()
         return bool(result)
+
 
     @logging_decorator
     @staticmethod
@@ -141,7 +151,7 @@ class Database:
         '''Функция выборки информации об избранных партнерах пользователя из таблицы "partners".
 
         '''
-        result = session.query(Partners).\
+        result = Database.session.query(Partners).\
             with_entities(Partners.first_name, Partners.last_name, Partners.link).\
             join(UsersPartners.partners).\
             filter(UsersPartners.id_user == user_id, UsersPartners.ignore == False).all()
@@ -156,6 +166,7 @@ class Buttons:
         NEGATIVE - красная/красная
          PRIMARY - синяя/белая
        SECONDARY - белая/серая
+
     '''
     # button (кнопки с текстом)
     start_searching_label = 'Начать поиск \U0001F495'
@@ -181,10 +192,37 @@ class Buttons:
     favorites_label = 'Показать понравившихся \U0001F60D'
     favorites = {'label': favorites_label,
                'color': VkKeyboardColor.POSITIVE}
+    
+    update_label = 'Начать сначала \U0001F504'
+    update = {'label': update_label,
+              'color': VkKeyboardColor.SECONDARY}
 
     # openlink_button (кнопки с ссылкой)
     github_link = {'label': 'Репозиторий в GitHub \U0001F40D',
                    'link': 'https://github.com/avsav1n/Telebot_cw'}
+    
+
+    @staticmethod
+    def get_main_navigation_keyboard() -> VkKeyboard:
+        '''Метод формирования основных навигационных кнопок.
+        
+        '''
+        keyboard = VkKeyboard()
+        keyboard.add_button(**Buttons.next_partner)
+        keyboard.add_line()
+        keyboard.add_button(**Buttons.update)
+        keyboard.add_button(**Buttons.favorites)
+        return keyboard
+    
+    @staticmethod
+    def get_inline_reactions_keyboard() -> VkKeyboard:
+        '''Метод формирования кнопок реакций на предлагаемых партнеров.
+        
+        '''
+        keyboard = VkKeyboard(inline=True)
+        keyboard.add_button(**Buttons.dislike)
+        keyboard.add_button(**Buttons.like)
+        return keyboard
 
 
 class VkontakteAPI(vk_api.VkApi):
@@ -193,7 +231,6 @@ class VkontakteAPI(vk_api.VkApi):
        Для подключения к API необходимо в файл config.py ввести имеющийся токен сообщества.
 
     '''
-
     def __init__(self, token):
         '''Конструктор класса.
 
@@ -204,6 +241,7 @@ class VkontakteAPI(vk_api.VkApi):
 
         # 1 - female, 2 - male
         self.invert_genders = {1: 2, 2: 1}
+
 
     @logging_decorator
     def get_user_info(self, user_id: int) -> dict:
@@ -232,8 +270,8 @@ class VkontakteAPI(vk_api.VkApi):
             'age': age,
             'sex': sex
         }
-
         return user_info
+
 
     @logging_decorator
     def find_all_partners(self, user_info: dict) -> Generator:
@@ -252,9 +290,10 @@ class VkontakteAPI(vk_api.VkApi):
         }
         all_partners = VkTools(self.api_user_token).\
                                 get_all_iter('users.search',
-                                max_count=100, values=params)
+                                max_count=1000, values=params)
         user_id = user_info['id_user']
         self.user_state[user_id]['all_partners'] = all_partners
+
 
     @logging_decorator
     def get_partner_photos(self, partner_id: int) -> Generator:
@@ -272,6 +311,7 @@ class VkontakteAPI(vk_api.VkApi):
 
         return photos_id
 
+
     @logging_decorator
     def get_partner(self, user_id: int):
         '''Метод обработки инфомации о следующем партнере из генератора find_all_partners.
@@ -288,12 +328,18 @@ class VkontakteAPI(vk_api.VkApi):
                 self.find_all_partners(user_info)
                 partner_info = next(self.user_state[user_id]['all_partners'])
 
+            if not (partner_info['first_name'].isalpha() and 
+                    partner_info['last_name'].isalpha()):
+                continue
+
             partner_id = partner_info['id']
             if not Database.check_ignore(user_id, partner_id):
                 break
 
         photos_id = self.get_partner_photos(partner_id)
 
+        partner_info = {key: value for key, value in partner_info.items() 
+                        if key in ('id', 'first_name', 'last_name')}
         partner_info['photos_id'] = photos_id
         self.user_state[user_id]['current_partner'] = partner_info
 
@@ -304,11 +350,12 @@ class VkontakteBot(VkontakteAPI):
        Для подключения к боту необходимо в файл config.py ввести имеющийся токен сообщества.
 
     '''
-    def __init__(self, token):
+    def __init__(self, token=VKGROUP_TOKEN):
         '''Конструктор класса.
 
         '''
         super().__init__(token=token)
+
 
     def __call__(self):
         '''Метод активации опроса серверов ВКонтакте на наличие новых сообщений.
@@ -316,22 +363,26 @@ class VkontakteBot(VkontakteAPI):
         '''
         longpoll = VkLongPoll(self)
 
-        global session
-        session = DatabaseConfig.Session()
         self.user_state.update(Database.get_users())
 
         print('Bot is running...')
         logging.warning('Бот Vk-сообщества запущен')
 
         for event in longpoll.listen():
+            try:
+                print(event.type, event.text, f'\n{event.from_chat=}', f'{event.from_group=}', f'{event.from_me=}', f'{event.from_user=}', f'{event.to_me=}')
+            except AttributeError:
+                pass
+
             if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-                if event.text == 'Стоп' and event.user_id == 863244386:
+                if event.text == 'Стоп':
                     print('Bot stopped from chat.')
                     logging.warning('Бот Vk-сообщества остановлен из чата\n')
                     break
                 self.start_handling(event)
 
-        session.close()
+        Database.session.close()
+
 
     def send_message(self, user_id: int, message: str,
                      keyboard: VkKeyboard=None, attachment: str=None):
@@ -346,6 +397,7 @@ class VkontakteBot(VkontakteAPI):
                                       'attachment': attachment,
                                       'random_id': randrange(10 ** 7)})
 
+
     def show_favorite_partners(self, user_id: int):
         '''Функция-обработчик сообщения 'Показать понравившихся'.
 
@@ -359,26 +411,22 @@ class VkontakteBot(VkontakteAPI):
 
         message = 'Вам понравились следующие люди \U0001F60A'
 
-        keyboard = VkKeyboard()
-        keyboard.add_button(**Buttons.next_partner)
-        keyboard.add_line()
-        keyboard.add_button(**Buttons.favorites)
+        keyboard = Buttons.get_main_navigation_keyboard()
         self.send_message(user_id, message=message, keyboard=keyboard)
 
         for partner in favorite_partners:
             message = f'{partner.first_name} {partner.last_name}\n{partner.link}'
             self.send_message(user_id, message=message, keyboard=keyboard)
 
+
     def show_if_favorite_partners_empty(self, user_id: int):
-        '''
-        
+        '''Метод отправки в чат пользователю предупреждения, что его список 
+           понравившихся партнеров пуст. 
+
         '''
         message = ('В настоящее время список понравившихся Вам людей пуст \U00002639\n'
                    'Продолжайте поиски! Никогда не поздно влюбиться \U0001F609')
-        keyboard = VkKeyboard()
-        keyboard.add_button(**Buttons.next_partner)
-        keyboard.add_line()
-        keyboard.add_button(**Buttons.favorites)
+        keyboard = Buttons.get_main_navigation_keyboard()
         self.send_message(user_id, message=message, keyboard=keyboard)
 
 
@@ -395,6 +443,7 @@ class VkontakteBot(VkontakteAPI):
         keyboard.add_button(**Buttons.repeat)
         self.send_message(user_id, message=message, keyboard=keyboard)
 
+
     def show_greeting(self, user_id: int):
         '''Метод отправки в чат пользователю приветствия.
         
@@ -407,6 +456,7 @@ class VkontakteBot(VkontakteAPI):
 
         self.greeting_handling(user_id)
 
+
     def reaction_like_handling(self, user_id: int):
         '''Функция-обработчик реакции 'Лайк' пользователя на отображаемого партнера.
 
@@ -415,6 +465,7 @@ class VkontakteBot(VkontakteAPI):
         
         '''
         Database.upload_partner_info(user_id, self.user_state[user_id]['current_partner'])
+        self.show_found_people(user_id)
 
 
     def reaction_dislike_handling(self, user_id: int):
@@ -467,9 +518,7 @@ class VkontakteBot(VkontakteAPI):
                    f'{self.user_state[user_id]['current_partner']['last_name']}\n'
                    f'https://vk.com/id{partner_id}')
 
-        keyboard = VkKeyboard(inline=True)
-        keyboard.add_button(**Buttons.dislike)
-        keyboard.add_button(**Buttons.like)
+        keyboard = Buttons.get_inline_reactions_keyboard()
 
         attachment = ''
         for photo_id in self.user_state[user_id]['current_partner']['photos_id']:
@@ -480,7 +529,7 @@ class VkontakteBot(VkontakteAPI):
 
 
     def start_searching_handling(self, user_id: int):
-        '''Функция-обработчик сообщения 'Начать поиск \U0001F495'
+        '''Функция-обработчик сообщения 'Начать поиск', 'Начать сначала'
 
            Запускает процедуру поиска партнеров для знакомства с пользователем,
            а также формирует интерфейс для взаимодействия с результатами.
@@ -489,11 +538,7 @@ class VkontakteBot(VkontakteAPI):
         user_info = Database.get_user_info(user_id)
         super().find_all_partners(user_info)
 
-        keyboard = VkKeyboard()
-        keyboard.add_button(**Buttons.next_partner)
-        keyboard.add_line()
-        keyboard.add_button(**Buttons.favorites)
-
+        keyboard = Buttons.get_main_navigation_keyboard()
         message = 'По Вашему запросу найдены следующие люди \U0001F970'
         self.send_message(user_id, message=message, keyboard=keyboard)
 
@@ -511,6 +556,10 @@ class VkontakteBot(VkontakteAPI):
 
             case Buttons.start_searching_label:
                 logging.info('Получена команда %s', Buttons.start_searching_label)
+                self.start_searching_handling(user_id)
+            
+            case Buttons.update_label:
+                logging.info('Получена команда %s', Buttons.update_label)
                 self.start_searching_handling(user_id)
 
             case Buttons.repeat_label:
@@ -538,5 +587,5 @@ class VkontakteBot(VkontakteAPI):
 
 
 if __name__ == '__main__':
-    api_group_token = VkontakteBot(token=VKGROUP_TOKEN)
+    api_group_token = VkontakteBot()
     api_group_token()
