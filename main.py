@@ -369,11 +369,6 @@ class VkontakteBot(VkontakteAPI):
         logging.warning('Бот Vk-сообщества запущен')
 
         for event in longpoll.listen():
-            try:
-                print(event.type, event.text, f'\n{event.from_chat=}', f'{event.from_group=}', f'{event.from_me=}', f'{event.from_user=}', f'{event.to_me=}')
-            except AttributeError:
-                pass
-
             if event.type == VkEventType.MESSAGE_NEW and event.to_me:
                 if event.text == 'Стоп':
                     print('Bot stopped from chat.')
@@ -439,7 +434,7 @@ class VkontakteBot(VkontakteAPI):
                    'в Вашем профиле недостаточно \U0000274C данных для осуществления '
                    'корретного поиска партнера. Пожалуйста, укажите минимально необходимую '
                    'информацию (пол, город, дату рождения) и повторите попытку! \U0001F575')
-        keyboard = VkKeyboard()
+        keyboard = VkKeyboard(one_time=True)
         keyboard.add_button(**Buttons.repeat)
         self.send_message(user_id, message=message, keyboard=keyboard)
 
@@ -524,7 +519,6 @@ class VkontakteBot(VkontakteAPI):
         for photo_id in self.user_state[user_id]['current_partner']['photos_id']:
             attachment += f'photo{partner_id}_{photo_id},'
 
-        logging.error(self.user_state[user_id])
         self.send_message(user_id, message=message, keyboard=keyboard, attachment=attachment)
 
 

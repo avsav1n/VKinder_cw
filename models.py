@@ -61,7 +61,7 @@ class Users(DatabaseConfig.Base):
     age = sq.Column(sq.SmallInteger, nullable=False)
     sex = sq.Column(sq.SmallInteger, sq.CheckConstraint("sex = 1 or sex = 2", name='check_sex'))
 
-    users_partners = relationship('UsersPartners', back_populates='users')
+    users_partners = relationship('UsersPartners', back_populates='users', cascade='all, delete-orphan')
 
 
 class Partners(DatabaseConfig.Base):
@@ -78,7 +78,7 @@ class Partners(DatabaseConfig.Base):
     last_name = sq.Column(sq.String(length=30), nullable=False)
     link = sq.Column(sq.Text, nullable=False)
 
-    users_partners = relationship('UsersPartners', back_populates='partners')
+    users_partners = relationship('UsersPartners', back_populates='partners', cascade='all, delete-orphan')
 
 
 class UsersPartners(DatabaseConfig.Base):
