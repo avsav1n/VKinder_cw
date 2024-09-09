@@ -117,7 +117,7 @@ class Database:
         
         '''
         result = Database.session.query(UsersPartners.ignore).\
-            filter(UsersPartners.id_user == user_id, 
+            filter(UsersPartners.id_user == user_id,
                    UsersPartners.id_partner == partner_id).scalar()
         return bool(result)
 
@@ -172,35 +172,35 @@ class Buttons:
     start_searching_label = 'Начать поиск \U0001F495'
     start_searching = {'label': start_searching_label,
                        'color': VkKeyboardColor.SECONDARY}
-    
+
     repeat_label = 'Повторить поиск \U0000267B'
     repeat = {'label': repeat_label,
               'color': VkKeyboardColor.SECONDARY}
-    
+
     like_label = '\U0001F44D'
     like = {'label': like_label,
             'color': VkKeyboardColor.POSITIVE}
-    
+
     dislike_label = '\U0001F44E'
     dislike = {'label': dislike_label,
                'color': VkKeyboardColor.NEGATIVE}
-    
+
     next_partner_label = 'Далее \U0001F500'
     next_partner = {'label': next_partner_label,
                     'color': VkKeyboardColor.SECONDARY}
-    
+
     favorites_label = 'Показать понравившихся \U0001F60D'
     favorites = {'label': favorites_label,
                'color': VkKeyboardColor.POSITIVE}
-    
+
     update_label = 'Начать сначала \U0001F504'
     update = {'label': update_label,
               'color': VkKeyboardColor.SECONDARY}
 
     # openlink_button (кнопки с ссылкой)
     github_link = {'label': 'Репозиторий в GitHub \U0001F40D',
-                   'link': 'https://github.com/avsav1n/Telebot_cw'}
-    
+                   'link': 'https://github.com/avsav1n/VKinder_cw'}
+
 
     @staticmethod
     def get_main_navigation_keyboard() -> VkKeyboard:
@@ -213,7 +213,7 @@ class Buttons:
         keyboard.add_button(**Buttons.update)
         keyboard.add_button(**Buttons.favorites)
         return keyboard
-    
+
     @staticmethod
     def get_inline_reactions_keyboard() -> VkKeyboard:
         '''Метод формирования кнопок реакций на предлагаемых партнеров.
@@ -328,7 +328,7 @@ class VkontakteAPI(vk_api.VkApi):
                 self.find_all_partners(user_info)
                 partner_info = next(self.user_state[user_id]['all_partners'])
 
-            if not (partner_info['first_name'].isalpha() and 
+            if not (partner_info['first_name'].isalpha() and
                     partner_info['last_name'].isalpha()):
                 continue
 
@@ -338,7 +338,7 @@ class VkontakteAPI(vk_api.VkApi):
 
         photos_id = self.get_partner_photos(partner_id)
 
-        partner_info = {key: value for key, value in partner_info.items() 
+        partner_info = {key: value for key, value in partner_info.items()
                         if key in ('id', 'first_name', 'last_name')}
         partner_info['photos_id'] = photos_id
         self.user_state[user_id]['current_partner'] = partner_info
@@ -551,7 +551,7 @@ class VkontakteBot(VkontakteAPI):
             case Buttons.start_searching_label:
                 logging.info('Получена команда %s', Buttons.start_searching_label)
                 self.start_searching_handling(user_id)
-            
+
             case Buttons.update_label:
                 logging.info('Получена команда %s', Buttons.update_label)
                 self.start_searching_handling(user_id)
