@@ -43,7 +43,7 @@ class Database:
     def get_users() -> dict:
         '''Функция выборки идентификаторов всех пользователей из таблицы "users".
 
-           Используется для заполнения оперативного словаря users_state 
+           Используется для заполнения словаря users_state 
            после перезапуска программы.
         
         '''
@@ -74,7 +74,7 @@ class Database:
 
     @logging_decorator
     @staticmethod
-    def upload_relationship(user_id: int, partner_id: int, ignore=False):
+    def upload_relationship(user_id: int, partner_id: int, ignore: bool=False):
         '''Функция добавления отношения между существующим пользователем и 
            существующим парнером в таблицу "users_partners".
         
@@ -86,7 +86,7 @@ class Database:
 
     @logging_decorator
     @staticmethod
-    def upload_partner_info(user_id: int, partner_info: dict, ignore=False):
+    def upload_partner_info(user_id: int, partner_info: dict, ignore: bool=False):
         '''Функция записи информации о партнере в таблицы "users" и "users_partners".
         
         '''
@@ -147,7 +147,7 @@ class Database:
 
     @logging_decorator
     @staticmethod
-    def get_favorite_partners(user_id: int):
+    def get_favorite_partners(user_id: int) -> list:
         '''Функция выборки информации об избранных партнерах пользователя из таблицы "partners".
 
         '''
@@ -226,12 +226,12 @@ class Buttons:
 
 
 class VkontakteAPI(vk_api.VkApi):
-    '''Класс для работы с API Вконтакте.
+    '''Класс для работы с API ВКонтакте.
 
        Для подключения к API необходимо в файл config.py ввести имеющийся токен сообщества.
 
     '''
-    def __init__(self, token):
+    def __init__(self, token: str):
         '''Конструктор класса.
 
         '''
@@ -350,7 +350,7 @@ class VkontakteBot(VkontakteAPI):
        Для подключения к боту необходимо в файл config.py ввести имеющийся токен сообщества.
 
     '''
-    def __init__(self, token=VKGROUP_TOKEN):
+    def __init__(self, token: str=VKGROUP_TOKEN):
         '''Конструктор класса.
 
         '''
