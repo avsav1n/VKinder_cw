@@ -111,6 +111,5 @@ class Genders(DatabaseConfig.Base):
 
 
 # if __name__ == '__main__':
-#     DatabaseConfig.delete_table()
 #     DatabaseConfig.create_table()
 #     DatabaseConfig.filling_out_gender()

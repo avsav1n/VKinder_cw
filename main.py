@@ -173,7 +173,7 @@ class Buttons:
     start_searching = {'label': start_searching_label,
                        'color': VkKeyboardColor.SECONDARY}
     
-    repeat_label = 'Повторить \U0000267B'
+    repeat_label = 'Повторить поиск \U0000267B'
     repeat = {'label': repeat_label,
               'color': VkKeyboardColor.SECONDARY}
     
